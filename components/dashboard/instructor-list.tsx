@@ -1,3 +1,4 @@
+"use client";
 import {
   Card,
   CardContent,
@@ -7,14 +8,11 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useInstructurs } from "@/hooks/useInstructor";
+import { Skeleton } from "../ui/skeleton";
 
 export function InstructorList() {
-  const instructors = [
-    { name: "Dr. Smith", department: "Mathematics", status: "Confirmed" },
-    { name: "Prof. Randy", department: "Physics", status: "Pending" },
-    { name: "Dr. Lee", department: "Chemistry", status: "Declined" },
-    { name: "Prof. Sayeed", department: "Biology", status: "Confirmed" },
-  ];
+  const { data: instructors, isLoading, isError, refetch } = useInstructurs();
 
   return (
     <Card className="col-span-3">
@@ -23,8 +21,18 @@ export function InstructorList() {
         <CardDescription>Overview of instructor responses</CardDescription>
       </CardHeader>
       <CardContent>
+        {isLoading && (
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-9 w-9 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-md" />
+          </div>
+        )}
         <div className="space-y-8">
-          {instructors.map((instructor, index) => (
+          {instructors?.map((instructor, index) => (
             <div key={index} className="flex items-center">
               <Avatar className="h-9 w-9">
                 <AvatarImage
@@ -46,15 +54,15 @@ export function InstructorList() {
                   {instructor.name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {instructor.department}
+                  {instructor.email}
                 </p>
               </div>
               <div className="ml-auto">
                 <Badge
                   variant={
-                    instructor.status === "Confirmed"
+                    instructor.status === "approved"
                       ? "default"
-                      : instructor.status === "Pending"
+                      : instructor.status === "pending"
                       ? "secondary"
                       : "destructive"
                   }
