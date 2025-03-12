@@ -29,7 +29,7 @@ export function DashboardNav() {
     },
     {
       title: "Reports",
-      href: "/dashboard/reports",
+      href: "/dashboard/Instructor-response",
     },
   ];
 

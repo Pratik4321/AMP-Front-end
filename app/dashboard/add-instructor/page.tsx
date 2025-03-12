@@ -1,20 +1,20 @@
 "use client";
+import { useState, ChangeEvent, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState, ChangeEvent, FormEvent } from "react";
 import { useCreateInstructor, useInstructurs } from "@/hooks/useInstructor";
 import { Oval } from "react-loader-spinner";
+import Papa from "papaparse";
 
 export default function AddInstructorForm() {
   const { data: instructors, isLoading, isError, refetch } = useInstructurs();
   const { mutate: createInstructor, isPending } = useCreateInstructor();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-  });
+  const [formData, setFormData] = useState({ name: "", email: "" });
+  const [csvData, setCsvData] = useState([]);
+  const [isSending, setIsSending] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,8 +33,61 @@ export default function AddInstructorForm() {
     );
   };
 
-  const handleSendAll = () => {
-    // Handle sending all instructors
+  const handleSendAll = async () => {
+    setIsSending(true);
+    try {
+      // Map CSV data to the format expected by the back-end
+      const mappedInstructors = csvData.map((instructor) => ({
+        name: instructor.name,
+        email: instructor.email,
+      }));
+
+      // Call the back-end endpoint
+      const response = await fetch("http://localhost:3000/send-batch-emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          instructors: mappedInstructors,
+          course: {
+            name: "CSE",
+            description: "This is a great course",
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send batch emails");
+      }
+
+      const result = await response.json();
+      console.log(result.message);
+      alert("Batch emails sent successfully!");
+    } catch (error) {
+      console.error("Error sending batch emails:", error);
+      alert("Failed to send batch emails");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) {
+      Papa.parse(e.target.files[0], {
+        complete: (result) => {
+          // Map all relevant columns from the CSV
+          const formattedData = result.data.slice(1).map((row) => ({
+            offering: row[0], // 1st column (Offering)
+            campus: row[1], // 2nd column (Campus)
+            delivery: row[2], // 3rd column (Delivery)
+            name: row[3], // 4th column (Name)
+            email: row[4], // 5th column (Email)
+          }));
+          setCsvData(formattedData);
+        },
+      });
+    }
   };
 
   if (isLoading) {
@@ -51,7 +104,6 @@ export default function AddInstructorForm() {
 
   return (
     <div className="flex justify-center items-start min-h-screen p-6 gap-8">
-      {/* Add Instructor Form */}
       <Card className="w-[40%] shadow-lg border border-gray-300">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold text-blue-600">
@@ -103,48 +155,71 @@ export default function AddInstructorForm() {
         </CardContent>
       </Card>
 
-      {/* Instructor List */}
       <Card className="w-[50%] shadow-lg border border-gray-300">
         <CardHeader className="flex justify-between items-center">
           <CardTitle className="text-2xl font-bold text-blue-600">
             Instructor List
           </CardTitle>
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleFileUpload}
+            className="hidden"
+            id="csvUpload"
+          />
+          <label
+            htmlFor="csvUpload"
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg cursor-pointer"
+          >
+            Upload CSV
+          </label>
           <Button
             onClick={handleSendAll}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+            disabled={isSending || csvData.length === 0}
           >
-            Send All
+            {isSending ? (
+              <Oval height={20} width={20} color="#fff" secondaryColor="#ccc" />
+            ) : (
+              "Send All"
+            )}
           </Button>
         </CardHeader>
         <CardContent>
-          {instructors?.length > 0 ? (
+          {csvData.length > 0 ? (
             <ul className="space-y-3">
-              {instructors?.map((instructor, index) => (
+              {csvData.map((instructor, index) => (
                 <li
                   key={index}
-                  className="p-3 bg-white rounded-lg shadow-md border border-gray-200 flex justify-between items-center"
+                  className="p-3 bg-white rounded-lg shadow-md border border-gray-200"
                 >
-                  <div>
+                  <div className="space-y-2">
                     <p className="text-lg font-semibold text-gray-700">
                       {instructor.name}
                     </p>
-                    <p className="text-sm text-gray-500">{instructor.email}</p>
+                    <p className="text-sm text-gray-500">
+                      <span className="font-medium">Email:</span>{" "}
+                      {instructor.email}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <span className="font-medium">Offering:</span>{" "}
+                      {instructor.offering}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <span className="font-medium">Campus:</span>{" "}
+                      {instructor.campus}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <span className="font-medium">Delivery:</span>{" "}
+                      {instructor.delivery}
+                    </p>
                   </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-md ${
-                      instructor.status === "approved"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-yellow-100 text-yellow-600"
-                    }`}
-                  >
-                    {instructor.status === "approved" ? "Sent" : "Pending"}
-                  </span>
                 </li>
               ))}
             </ul>
           ) : (
             <p className="text-center text-gray-500">
-              No instructors added yet.
+              No CSV data uploaded yet.
             </p>
           )}
         </CardContent>

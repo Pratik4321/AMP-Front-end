@@ -5,17 +5,57 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/Context/authContext"; // Import useAuth
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth(); // Use the login function from AuthContext
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(""); // State for error messages
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/dashboard");
 
-    console.log("Logging in with:", { email, password });
+    // Basic validation
+    if (!email || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    // Simulate a login API call
+    try {
+      // Replace this with your actual login API call
+      const userData = await fakeLoginApi(email, password);
+
+      // Call the login function from AuthContext
+      login(userData);
+
+      // Redirect to the dashboard
+      router.push("/dashboard");
+    } catch (error) {
+      setError("Invalid email or password.");
+    }
+  };
+
+  // Simulate a fake login API call
+  const fakeLoginApi = async (email: string, password: string) => {
+    // Replace this with your actual API call
+    return new Promise<{ id: string; name: string; email: string }>(
+      (resolve, reject) => {
+        setTimeout(() => {
+          if (email === "admin@gmail.com" && password === "admin") {
+            resolve({
+              id: "123",
+              name: "admin",
+              email: "admin@gmail.com",
+            });
+          } else {
+            reject(new Error("Invalid credentials"));
+          }
+        }, 1000); // Simulate network delay
+      }
+    );
   };
 
   return (
@@ -52,6 +92,9 @@ export default function LoginPage() {
                 required
               />
             </div>
+            {error && (
+              <p className="text-sm text-red-500 text-center">{error}</p>
+            )}
             <Button type="submit" className="w-full">
               Login
             </Button>

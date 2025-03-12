@@ -36,15 +36,14 @@ export function InstructorList() {
             <div key={index} className="flex items-center">
               <Avatar className="h-9 w-9">
                 <AvatarImage
-                  src={`https://avatar.vercel.sh/${instructor.name.replace(
+                  src={`https://avatar.vercel.sh/${instructor.name?.replace(
                     " ",
                     "-"
                   )}.png`}
                   alt={instructor.name}
                 />
                 <AvatarFallback>
-                  {instructor.name
-                    .split(" ")
+                  {instructor.name?.split(" ")
                     .map((n) => n[0])
                     .join("")}
                 </AvatarFallback>
