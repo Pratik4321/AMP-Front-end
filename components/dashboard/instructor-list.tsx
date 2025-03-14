@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -10,9 +11,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useInstructurs } from "@/hooks/useInstructor";
 import { Skeleton } from "../ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 export function InstructorList() {
   const { data: instructors, isLoading, isError, refetch } = useInstructurs();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Pagination logic
+  const totalItems = instructors?.length || 0;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const paginatedInstructors = instructors?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <Card className="col-span-3">
@@ -32,7 +45,7 @@ export function InstructorList() {
           </div>
         )}
         <div className="space-y-8">
-          {instructors?.map((instructor, index) => (
+          {paginatedInstructors?.map((instructor, index) => (
             <div key={index} className="flex items-center">
               <Avatar className="h-9 w-9">
                 <AvatarImage
@@ -43,7 +56,8 @@ export function InstructorList() {
                   alt={instructor.name}
                 />
                 <AvatarFallback>
-                  {instructor.name?.split(" ")
+                  {instructor.name
+                    ?.split(" ")
                     .map((n) => n[0])
                     .join("")}
                 </AvatarFallback>
@@ -72,6 +86,31 @@ export function InstructorList() {
             </div>
           ))}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-between mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
