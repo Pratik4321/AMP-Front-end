@@ -8,7 +8,10 @@ export function Overview() {
   const { data: emailTrack, isLoading, isError } = useEmailTrack();
 
   const renderPending = useCallback(() => {
-    if (emailTrack?.emailSent && emailTrack?.emailRespond) {
+    if (
+      emailTrack?.emailSent !== undefined &&
+      emailTrack?.emailRespond !== undefined
+    ) {
       return (
         <div className="text-2xl font-bold">
           {emailTrack?.emailSent - emailTrack?.emailRespond}

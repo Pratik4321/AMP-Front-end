@@ -4,7 +4,6 @@
 import { AuthContextType, User } from "@/types/auth";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {

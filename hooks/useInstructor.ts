@@ -25,17 +25,34 @@ export const useInstructurs = () => {
   });
 };
 
-const fetchInstructorResponse = async (): Promise<InstructorResponse[]> => {
-  const { data } = await apiClient.get<any>("/recent-activities");
+const fetchInstructorResponse = async (
+  nameFilter: string,
+  emailFilter: string,
+  availabilityFilter: boolean | null
+): Promise<InstructorResponse[]> => {
+  const params: any = {};
+
+  if (nameFilter) params.name = nameFilter;
+  if (emailFilter) params.email = emailFilter;
+  if (availabilityFilter !== null)
+    params.available = availabilityFilter.toString();
+
+  const { data } = await apiClient.get<any>("/recent-activities", { params });
   return data.recentResponses;
 };
 
-export const useInstructorResponse = () => {
+export const useInstructorResponse = (
+  nameFilter: string,
+  emailFilter: string,
+  availabilityFilter: boolean | null
+) => {
   return useQuery<InstructorResponse[], Error>({
-    queryKey: ["instructor-response"], // Unique key for the query
-    queryFn: fetchInstructorResponse, // Function to fetch data
+    queryKey: ["instructor-response"],
+    queryFn: () =>
+      fetchInstructorResponse(nameFilter, emailFilter, availabilityFilter),
     staleTime: 1000 * 60 * 5, // Data is fresh for 5 minutes
     retry: 2,
+    enabled: true, // Always enabled to fetch initial data on mount
   });
 };
 

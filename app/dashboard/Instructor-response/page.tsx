@@ -1,70 +1,53 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useInstructorResponse } from "../../../hooks/useInstructor";
 
 export default function InstructorTable() {
-  const {
-    data: instructorResponses,
-    isLoading,
-    isError,
-  } = useInstructorResponse();
-
   const [nameFilter, setNameFilter] = useState("");
   const [emailFilter, setEmailFilter] = useState("");
-  const [courseFilter, setCourseFilter] = useState("all"); // Default to "all"
   const [availabilityFilter, setAvailabilityFilter] = useState<boolean | null>(
     null
   );
 
-  // Filtered data
-  const filteredData = instructorResponses?.filter((instructor) => {
-    const matchesName = instructor.instructorId?.Name.toLowerCase().includes(
-      nameFilter.toLowerCase()
-    );
-    const matchesEmail = instructor.instructorId?.Email.toLowerCase().includes(
-      emailFilter.toLowerCase()
-    );
-    const matchesCourse =
-      courseFilter === "all"
-        ? true
-        : instructor.instructorId.Courses === courseFilter;
-    const matchesAvailability =
-      availabilityFilter !== null ? instructor.availability === "yes" : true;
+  // Fetch initial data when the component mounts
+  const {
+    data: instructorResponses,
+    isLoading,
+    isError,
+    refetch,
+  } = useInstructorResponse(nameFilter, emailFilter, availabilityFilter);
 
-    return matchesName && matchesEmail && matchesCourse && matchesAvailability;
-  });
+  // Fetch data when Apply Filters button is pressed
+  const filterInstructor = () => {
+    // Trigger refetch based on the new filter criteria
+    refetch();
+  };
 
-  // Unique courses for dropdown
-  const uniqueCourses = ["Software Engineering", "Data Science", "AI"];
+  const clearFilters = useCallback(() => {
+    setNameFilter("");
+    setEmailFilter("");
+    setAvailabilityFilter(null);
+    refetch();
+  }, [nameFilter, emailFilter]);
 
   // Function to download CSV
   const downloadCSV = () => {
-    // Create CSV headers
     const headers = ["Name", "Email", "Course", "Availability"];
-    const rows = filteredData?.map((instructor) => [
+    const rows = instructorResponses?.map((instructor) => [
       instructor.instructorId?.Name,
       instructor.instructorId?.Email,
       instructor.instructorId?.Courses,
-      instructor.availability ? "Available" : "Not Available",
+      instructor.availability === "yes" ? "Available" : "Not Available",
     ]);
 
-    // Combine headers and rows
     const csvContent = [headers, ...(rows || [])]
       .map((row) => row.map((cell: any) => `"${cell}"`).join(","))
       .join("\n");
 
-    // Create a Blob and trigger download
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -73,8 +56,8 @@ export default function InstructorTable() {
     URL.revokeObjectURL(link.href);
   };
 
-  if (isLoading) {
-    return <div>loading...</div>;
+  if (isError) {
+    return <div>Error loading data</div>;
   }
 
   return (
@@ -103,26 +86,7 @@ export default function InstructorTable() {
             className="w-48"
           />
         </div>
-        <div>
-          <Label htmlFor="course">Course</Label>
-          <Select
-            value={courseFilter}
-            onValueChange={(value) => setCourseFilter(value)}
-          >
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select course" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Courses</SelectItem>
-              {uniqueCourses.map((course) => (
-                <SelectItem key={course} value={course}>
-                  {course}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
+        {/* <div>
           <Label htmlFor="availability">Availability</Label>
           <div className="flex items-center space-x-2">
             <Checkbox
@@ -136,19 +100,14 @@ export default function InstructorTable() {
               Available
             </label>
           </div>
-        </div>
-        <Button
-          onClick={() => {
-            setNameFilter("");
-            setEmailFilter("");
-            setCourseFilter("all");
-            setAvailabilityFilter(null);
-          }}
-          className="self-end"
-        >
+        </div> */}
+        <Button onClick={filterInstructor} className="self-end bg-green-600">
+          Apply Filters
+        </Button>
+        <Button onClick={clearFilters} className="self-end">
           Clear Filters
         </Button>
-        <Button onClick={downloadCSV} className="self-end bg-green-600">
+        <Button onClick={downloadCSV} className="self-end bg-red-600">
           Download CSV
         </Button>
       </div>
