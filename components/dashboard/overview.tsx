@@ -2,9 +2,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, UserCheck, UserX, AlertTriangle } from "lucide-react";
 import { useEmailTrack } from "../../hooks/useEmail";
+import { useCallback } from "react";
 
 export function Overview() {
   const { data: emailTrack, isLoading, isError } = useEmailTrack();
+
+  const renderPending = useCallback(() => {
+    if (emailTrack?.emailSent && emailTrack?.emailRespond) {
+      return (
+        <div className="text-2xl font-bold">
+          {emailTrack?.emailSent - emailTrack?.emailRespond}
+        </div>
+      );
+    } else {
+      return <div>loading...</div>;
+    }
+  }, [emailTrack]);
   if (isLoading) {
     return <div>loading...</div>;
   }
@@ -39,11 +52,7 @@ export function Overview() {
           </CardTitle>
           <UserX className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {emailTrack?.emailSent ?? 0 - emailTrack?.emailRespond ?? 0}
-          </div>
-        </CardContent>
+        <CardContent>{renderPending()}</CardContent>
       </Card>
     </div>
   );
