@@ -11,88 +11,57 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useInstructorResponse } from "../../../hooks/useInstructor";
 
 export default function InstructorTable() {
-  // Dummy data
-  const dummyData = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@example.com",
-      course: "CSE",
-      availability: true,
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      course: "Mathematics",
-      availability: false,
-    },
-    {
-      id: 3,
-      name: "Alice Johnson",
-      email: "alice.johnson@example.com",
-      course: "Physics",
-      availability: true,
-    },
-    {
-      id: 4,
-      name: "Bob Brown",
-      email: "bob.brown@example.com",
-      course: "CSE",
-      availability: false,
-    },
-    {
-      id: 5,
-      name: "Charlie Davis",
-      email: "charlie.davis@example.com",
-      course: "Mathematics",
-      availability: true,
-    },
-  ];
+  const {
+    data: instructorResponses,
+    isLoading,
+    isError,
+  } = useInstructorResponse();
 
-  // State for filters
   const [nameFilter, setNameFilter] = useState("");
   const [emailFilter, setEmailFilter] = useState("");
   const [courseFilter, setCourseFilter] = useState("all"); // Default to "all"
-  const [availabilityFilter, setAvailabilityFilter] = useState(null);
+  const [availabilityFilter, setAvailabilityFilter] = useState<boolean | null>(
+    null
+  );
 
   // Filtered data
-  const filteredData = dummyData.filter((instructor) => {
-    const matchesName = instructor.name
-      .toLowerCase()
-      .includes(nameFilter.toLowerCase());
-    const matchesEmail = instructor.email
-      .toLowerCase()
-      .includes(emailFilter.toLowerCase());
+  const filteredData = instructorResponses?.filter((instructor) => {
+    const matchesName = instructor.instructorId?.Name.toLowerCase().includes(
+      nameFilter.toLowerCase()
+    );
+    const matchesEmail = instructor.instructorId?.Email.toLowerCase().includes(
+      emailFilter.toLowerCase()
+    );
     const matchesCourse =
-      courseFilter === "all" ? true : instructor.course === courseFilter;
+      courseFilter === "all"
+        ? true
+        : instructor.instructorId.Courses === courseFilter;
     const matchesAvailability =
-      availabilityFilter !== null
-        ? instructor.availability === availabilityFilter
-        : true;
+      availabilityFilter !== null ? instructor.availability === "yes" : true;
 
     return matchesName && matchesEmail && matchesCourse && matchesAvailability;
   });
 
   // Unique courses for dropdown
-  const uniqueCourses = [...new Set(dummyData.map((item) => item.course))];
+  const uniqueCourses = ["Software Engineering", "Data Science", "AI"];
 
   // Function to download CSV
   const downloadCSV = () => {
     // Create CSV headers
     const headers = ["Name", "Email", "Course", "Availability"];
-    const rows = filteredData.map((instructor) => [
-      instructor.name,
-      instructor.email,
-      instructor.course,
+    const rows = filteredData?.map((instructor) => [
+      instructor.instructorId?.Name,
+      instructor.instructorId?.Email,
+      instructor.instructorId?.Courses,
       instructor.availability ? "Available" : "Not Available",
     ]);
 
     // Combine headers and rows
-    const csvContent = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+    const csvContent = [headers, ...(rows || [])]
+      .map((row) => row.map((cell: any) => `"${cell}"`).join(","))
       .join("\n");
 
     // Create a Blob and trigger download
@@ -103,6 +72,10 @@ export default function InstructorTable() {
     link.click();
     URL.revokeObjectURL(link.href);
   };
+
+  if (isLoading) {
+    return <div>loading...</div>;
+  }
 
   return (
     <div className="p-6">
@@ -192,13 +165,15 @@ export default function InstructorTable() {
             </tr>
           </thead>
           <tbody>
-            {filteredData.map((instructor) => (
-              <tr key={instructor.id} className="border-t">
-                <td className="px-4 py-2">{instructor.name}</td>
-                <td className="px-4 py-2">{instructor.email}</td>
-                <td className="px-4 py-2">{instructor.course}</td>
+            {instructorResponses?.map((instructor) => (
+              <tr key={instructor._id} className="border-t">
+                <td className="px-4 py-2">{instructor?.instructorId?.Name}</td>
+                <td className="px-4 py-2">{instructor?.instructorId?.Email}</td>
                 <td className="px-4 py-2">
-                  {instructor.availability ? (
+                  {instructor?.instructorId?.Courses}
+                </td>
+                <td className="px-4 py-2">
+                  {instructor.availability === "yes" ? (
                     <span className="text-green-600">Available</span>
                   ) : (
                     <span className="text-red-600">Not Available</span>

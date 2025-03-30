@@ -49,32 +49,31 @@ export function InstructorList() {
             <div key={index} className="flex items-center">
               <Avatar className="h-9 w-9">
                 <AvatarImage
-                  src={`https://avatar.vercel.sh/${instructor.name?.replace(
+                  src={`https://avatar.vercel.sh/${instructor.Name?.replace(
                     " ",
                     "-"
                   )}.png`}
-                  alt={instructor.name}
+                  alt={instructor.Name}
                 />
                 <AvatarFallback>
-                  {instructor.name
-                    ?.split(" ")
+                  {instructor.Name?.split(" ")
                     .map((n) => n[0])
                     .join("")}
                 </AvatarFallback>
               </Avatar>
               <div className="ml-4 space-y-1">
                 <p className="text-sm font-medium leading-none">
-                  {instructor.name}
+                  {instructor.Name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {instructor.email}
+                  {instructor.Email}
                 </p>
               </div>
               <div className="ml-auto">
                 <Badge
                   variant={
-                    instructor.status === "approved"
-                      ? "default"
+                    instructor.status === "available"
+                      ? "success"
                       : instructor.status === "pending"
                       ? "secondary"
                       : "destructive"
