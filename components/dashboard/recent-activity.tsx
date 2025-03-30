@@ -1,3 +1,4 @@
+"use client";
 import {
   Card,
   CardContent,
@@ -5,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useRecentActivities } from "../../hooks/useRecentActivity";
 
 export function RecentActivity() {
   const activities = [
@@ -33,7 +35,10 @@ export function RecentActivity() {
       time: "2 days ago",
     },
   ];
-
+  const { data: recentActivities, isLoading, isError } = useRecentActivities();
+  if (isLoading) {
+    return <div>loading...</div>;
+  }
   return (
     <Card className="col-span-4">
       <CardHeader>
@@ -44,17 +49,17 @@ export function RecentActivity() {
       </CardHeader>
       <CardContent>
         <div className="space-y-8">
-          {activities.map((activity, index) => (
+          {recentActivities?.map((activity, index) => (
             <div key={index} className="flex items-center">
               <div className="space-y-1">
                 <p className="text-sm font-medium leading-none">
-                  {activity.instructor}
+                  {activity?.instructorId?.Name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {activity.action} for {activity.course}
+                  {activity?.availability} for {activity?.instructorId?.Courses}
                 </p>
               </div>
-              <div className="ml-auto font-medium">{activity.time}</div>
+              {/* <div className="ml-auto font-medium">{activity.createdAt}</div> */}
             </div>
           ))}
         </div>

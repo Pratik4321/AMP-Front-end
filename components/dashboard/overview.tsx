@@ -1,7 +1,13 @@
+"use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, UserCheck, UserX, AlertTriangle } from "lucide-react";
+import { useEmailTrack } from "../../hooks/useEmail";
 
 export function Overview() {
+  const { data: emailTrack, isLoading, isError } = useEmailTrack();
+  if (isLoading) {
+    return <div>loading...</div>;
+  }
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
@@ -12,7 +18,7 @@ export function Overview() {
           <Mail className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">1,234</div>
+          <div className="text-2xl font-bold">{emailTrack?.emailSent}</div>
         </CardContent>
       </Card>
       <Card>
@@ -23,7 +29,7 @@ export function Overview() {
           <UserCheck className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">845</div>
+          <div className="text-2xl font-bold">{emailTrack?.emailRespond}</div>
         </CardContent>
       </Card>
       <Card>
@@ -34,7 +40,9 @@ export function Overview() {
           <UserX className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">389</div>
+          <div className="text-2xl font-bold">
+            {emailTrack?.emailSent ?? 0 - emailTrack?.emailRespond ?? 0}
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,42 +1,33 @@
 "use client";
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Oval } from "react-loader-spinner";
-import Papa from "papaparse";
+import axios from "axios";
+import { Instructor } from "../../../types/instructor";
 
 export default function AddInstructorForm() {
-  const [csvData, setCsvData] = useState([]);
+  const [csvData, setCsvData] = useState<Instructor[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [file, setFile] = useState<File>();
 
   const handleSendAll = async () => {
     setIsSending(true);
     try {
-      // Map CSV data to the format expected by the back-end
-      const mappedInstructors = csvData.map((instructor) => ({
-        name: instructor.name,
-        email: instructor.email,
-      }));
-
-      // Call the back-end endpoint
+      if (csvData.length === 0) {
+        alert("No instructors to send");
+        return;
+      }
       const response = await fetch("http://localhost:3000/send-batch-emails", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          instructors: mappedInstructors,
-          course: {
-            name: "CSE",
-            description: "This is a great course",
-          },
-        }),
+        body: JSON.stringify({ instructors: csvData }),
       });
-
       if (!response.ok) {
         throw new Error("Failed to send batch emails");
       }
-
       const result = await response.json();
       console.log(result.message);
       alert("Batch emails sent successfully!");
@@ -48,23 +39,72 @@ export default function AddInstructorForm() {
     }
   };
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) {
-      Papa.parse(e.target.files[0], {
-        complete: (result) => {
-          // Map all relevant columns from the CSV
-          const formattedData = result.data.slice(1).map((row) => ({
-            offering: row[0], // 1st column (Offering)
-            campus: row[1], // 2nd column (Campus)
-            delivery: row[2], // 3rd column (Delivery)
-            name: row[3], // 4th column (Name)
-            email: row[4], // 5th column (Email)
-          }));
-          setCsvData(formattedData);
-        },
-      });
-    }
-  };
+  const handleFileUpload = useCallback(
+    async (e: ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files?.length) {
+        const selectedFile = e.target.files[0];
+        console.log(e.target.files[0]);
+
+        if (!selectedFile) {
+          alert("Please select a file");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        try {
+          const response = await axios.post(
+            "http://localhost:3000/instructors/upload",
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          console.log("File uploaded successfully:", response.data);
+          setCsvData(response.data.instructors); // Assuming the response contains the CSV data
+        } catch (error) {
+          console.error("Error uploading file:", error);
+        }
+      }
+    },
+    [file]
+  );
+
+  // const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+  //   if (e.target.files?.length) {
+  //     const selectedFile = e.target.files[0];
+  //     setFile(selectedFile);
+  //     console.log(e.target.files[0]);
+
+  //     if (!file) {
+  //       alert("Please select a file");
+  //       return;
+  //     }
+
+  //     const formData = new FormData();
+  //     formData.append("csvFile", file);
+
+  //     try {
+  //       const response = await axios.post(
+  //         "http://localhost:3000/instructor/upload",
+  //         formData,
+  //         {
+  //           headers: {
+  //             "Content-Type": "multipart/form-data",
+  //           },
+  //         }
+  //       );
+
+  //       console.log("File uploaded successfully:", response.data);
+  //     } catch (error) {
+  //       console.error("Error uploading file:", error);
+  //     }
+  //   }
+  // };
 
   return (
     <div className="flex justify-center items-start min-h-screen p-6 bg-gray-50">
@@ -117,23 +157,23 @@ export default function AddInstructorForm() {
                 >
                   <div className="space-y-3">
                     <p className="text-lg font-semibold text-gray-800">
-                      {instructor.name}
+                      {instructor.Name}
                     </p>
                     <p className="text-sm text-gray-600">
                       <span className="font-medium">Email:</span>{" "}
-                      {instructor.email}
+                      {instructor.Email}
                     </p>
                     <p className="text-sm text-gray-600">
                       <span className="font-medium">Offering:</span>{" "}
-                      {instructor.offering}
+                      {instructor.Offering}
                     </p>
                     <p className="text-sm text-gray-600">
                       <span className="font-medium">Campus:</span>{" "}
-                      {instructor.campus}
+                      {instructor.Campus}
                     </p>
                     <p className="text-sm text-gray-600">
                       <span className="font-medium">Delivery:</span>{" "}
-                      {instructor.delivery}
+                      {instructor.Delivery}
                     </p>
                   </div>
                 </li>
